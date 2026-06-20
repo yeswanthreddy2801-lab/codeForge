@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(uuid())
+  username        String   @unique
+  email           String   @unique
+  passwordHash    String
+  fullName        String?
+  bio             String?
+  location        String?
+  avatarUrl       String?
+  role            Role     @default(USER)
+  isVerified      Boolean  @default(false)
+  verifyToken     String?
+  resetToken      String?
+  resetTokenExpiry DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  submissions     Submission[]
+  contestEntries  ContestEntry[]
+  lessonProgress  LessonProgress[]
+  etcHistory      EtcHistory[]
+  refreshTokens   RefreshToken[]
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Problem {
+  id           Int      @id @default(autoincrement())
+  title        String
+  slug         String   @unique
+  statement    String   @db.Text
+  difficulty   Difficulty
+  category     String
+  tags         String[]
+  constraints  String[]
+  examples     Json
+  testCases    Json     // hidden, not returned to frontend
+  starterCode  Json     // { mylang: string, cpp: string, java: string, python: string }
+  acceptedCount Int     @default(0)
+  totalAttempts Int     @default(0)
+  isPublished  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  submissions  Submission[]
+  contestProblems ContestProblem[]
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model Submission {
+  id          String   @id @default(uuid())
+  userId      String
+  problemId   Int
+  language    String
+  code        String   @db.Text
+  verdict     Verdict
+  runtime     Int?     // ms
+  memory      Int?     // KB
+  stdout      String?  @db.Text
+  stderr      String?  @db.Text
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+  problem     Problem  @relation(fields: [problemId], references: [id])
+}
+
+enum Verdict {
+  ACCEPTED
+  WRONG_ANSWER
+  TIME_LIMIT_EXCEEDED
+  MEMORY_LIMIT_EXCEEDED
+  COMPILATION_ERROR
+  RUNTIME_ERROR
+  PENDING
+}
+
+model Contest {
+  id           Int      @id @default(autoincrement())
+  title        String
+  description  String   @db.Text
+  startTime    DateTime
+  endTime      DateTime
+  difficulty   String
+  prizes       String[]
+  isPublished  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  problems     ContestProblem[]
+  entries      ContestEntry[]
+}
+
+model ContestProblem {
+  contestId  Int
+  problemId  Int
+  points     Int      @default(100)
+  order      Int
+  contest    Contest  @relation(fields: [contestId], references: [id])
+  problem    Problem  @relation(fields: [problemId], references: [id])
+  @@id([contestId, problemId])
+}
+
+model ContestEntry {
+  id         String   @id @default(uuid())
+  userId     String
+  contestId  Int
+  score      Int      @default(0)
+  rank       Int?
+  joinedAt   DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+  contest    Contest  @relation(fields: [contestId], references: [id])
+  @@unique([userId, contestId])
+}
+
+model Lesson {
+  id          String   @id  // slug: 'variables', 'loops', etc.
+  title       String
+  order       Int      @unique
+  content     Json     // full lesson content array
+  estimatedMinutes Int
+  createdAt   DateTime @default(now())
+  progress    LessonProgress[]
+}
+
+model LessonProgress {
+  userId      String
+  lessonId    String
+  completed   Boolean  @default(false)
+  completedAt DateTime?
+  user        User     @relation(fields: [userId], references: [id])
+  lesson      Lesson   @relation(fields: [lessonId], references: [id])
+  @@id([userId, lessonId])
+}
+
+model EtcHistory {
+  id          String   @id @default(uuid())
+  userId      String
+  englishText String   @db.Text
+  language    String
+  generatedCode String @db.Text
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
