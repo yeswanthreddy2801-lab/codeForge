@@ -3,6 +3,9 @@ import RedisStore from 'rate-limit-redis';
 import { redisClient } from '../config/redis';
 
 const createRedisStore = (prefix: string) => {
+  if (typeof redisClient.call !== 'function') {
+    return undefined; // Fallback to MemoryStore for mock redis
+  }
   return new RedisStore({
     prefix,
     sendCommand: (...args: string[]) => redisClient.call(args[0], ...args.slice(1)) as any,

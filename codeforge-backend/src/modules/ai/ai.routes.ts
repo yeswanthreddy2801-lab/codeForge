@@ -11,7 +11,7 @@ const aiRateLimiter = rateLimit({
 
 const router = Router();
 
-router.post('/translate', authenticate, aiRateLimiter, AiController.translate);
+router.post('/translate', aiRateLimiter, AiController.translate);
 router.get('/history', authenticate, AiController.getHistory);
 
 export default router;

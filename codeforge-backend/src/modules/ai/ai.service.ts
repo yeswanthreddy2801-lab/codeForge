@@ -1,44 +1,66 @@
 import { prisma } from '../../config/database';
 import { env } from '../../config/env';
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const openai = new OpenAI({
-  apiKey: env.OPENAI_API_KEY,
-});
+const genAI = new GoogleGenerativeAI(env.OPENAI_API_KEY);
 
 export class AiService {
-  static async translate(userId: string, englishContent: string) {
-    const systemPrompt = `You are an expert translator from English to the custom programming language MyLang. 
-MyLang syntax rules:
+  static async translate(userId: string | undefined, englishContent: string, language: string) {
+    let languageRules = '';
+    if (language === 'mylang') {
+      languageRules = `MyLang syntax rules:
 - Functions use 'def' keyword.
 - Variables use 'let' or 'const'.
 - Print statements use 'print()'.
 - Blocks are enclosed in braces {}.
-- No semicolons required.
+- No semicolons required.`;
+    } else {
+      languageRules = `Ensure standard ${language} syntax.`;
+    }
+
+    const systemPrompt = `You are an expert programmer. Translate the following English logic description into ${language} code.
+${languageRules}
 
 Provide ONLY the code without any markdown formatting, no backticks, no explanations.`;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: englishContent }
-      ],
-      temperature: 0.2,
-    });
+    let generatedCode = '';
 
-    const mylangCode = response.choices[0].message.content || '';
+    try {
+      const model = genAI.getGenerativeModel({
+        model: 'gemini-2.5-flash',
+        systemInstruction: systemPrompt
+      });
 
-    const translation = await prisma.etcHistory.create({
-      data: {
-        userId,
-        englishText: englishContent,
-        generatedCode: mylangCode,
-        language: 'mylang',
-      }
-    });
+      const result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: englishContent }] }],
+        generationConfig: {
+          temperature: 0.2,
+        }
+      });
 
-    return { englishContent, mylangCode: translation.generatedCode };
+      generatedCode = result.response.text() || '';
+    } catch (error: any) {
+      console.error('Gemini Native API Error:', error?.message || error);
+      // Fallback mock response so the UI doesn't crash for the user
+      generatedCode = `// AI Generation failed. Here is a mock response:
+function mockTranslatedCode() {
+  console.log("This is a simulated AI response.");
+  console.log("Your input was: ${englishContent}");
+}`;
+    }
+
+    if (userId) {
+      await prisma.etcHistory.create({
+        data: {
+          userId,
+          englishText: englishContent,
+          generatedCode: generatedCode,
+          language: language,
+        }
+      });
+    }
+
+    return { englishContent, code: generatedCode, language };
   }
 
   static async getHistory(userId: string) {

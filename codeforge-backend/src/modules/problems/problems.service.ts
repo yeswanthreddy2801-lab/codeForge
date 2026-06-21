@@ -23,10 +23,10 @@ export class ProblemsService {
     if (search) {
       where.title = { contains: search as string, mode: 'insensitive' };
     }
-    if (difficulty) {
+    if (difficulty && difficulty !== 'All') {
       where.difficulty = difficulty as any;
     }
-    if (category) {
+    if (category && category !== 'All') {
       where.category = category as string;
     }
     if (tags) {

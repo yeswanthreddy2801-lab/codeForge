@@ -7,7 +7,7 @@ export const SubmitCodeSchema = z.object({
 });
 
 export const RunCodeSchema = z.object({
-  problemId: z.number().int().positive(),
+  problemId: z.number().int().positive().optional(),
   language: z.enum(['mylang', 'cpp', 'java', 'python']),
   code: z.string().min(1).max(50 * 1024),
   customInput: z.string().optional(),

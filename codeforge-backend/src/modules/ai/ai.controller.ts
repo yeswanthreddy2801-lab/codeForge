@@ -5,14 +5,15 @@ import { success } from '../../shared/utils/response.util';
 
 const TranslateSchema = z.object({
   englishContent: z.string().min(1).max(500),
+  language: z.enum(['mylang', 'c', 'cpp', 'java', 'python']).default('mylang'),
 });
 
 export class AiController {
   static async translate(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = req.user!.id;
-      const { englishContent } = TranslateSchema.parse(req.body);
-      const result = await AiService.translate(userId, englishContent);
+      const userId = req.user?.id;
+      const { englishContent, language } = TranslateSchema.parse(req.body);
+      const result = await AiService.translate(userId, englishContent, language);
       return success(res, result, 'Translation completed', 201);
     } catch (error) {
       next(error);

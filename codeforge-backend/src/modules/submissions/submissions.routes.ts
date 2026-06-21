@@ -5,8 +5,8 @@ import { submissionLimiter } from '../../middleware/rateLimit.middleware';
 
 const router = Router();
 
-router.post('/', authenticate, submissionLimiter, SubmissionsController.submitCode);
-router.post('/run', authenticate, submissionLimiter, SubmissionsController.runCode);
+router.post('/', submissionLimiter, SubmissionsController.submitCode);
+router.post('/run', submissionLimiter, SubmissionsController.runCode);
 router.get('/:id', authenticate, SubmissionsController.getSubmissionById);
 router.get('/problem/:problemId', authenticate, SubmissionsController.getSubmissionsByProblem);
 

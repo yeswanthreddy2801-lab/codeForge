@@ -15,7 +15,7 @@ const app = express();
 // Middleware Chain
 app.use(helmet());
 app.use(cors({
-  origin: env.FRONTEND_URL,
+  origin: [env.FRONTEND_URL, 'http://localhost:8080', 'http://localhost:5173'],
   credentials: true
 }));
 app.use(morgan('dev'));

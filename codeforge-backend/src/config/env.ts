@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import dotenv from 'dotenv';
 
-dotenv.config();
+dotenv.config({ override: true });
 
 const envSchema = z.object({
   DATABASE_URL: z.string().url(),
@@ -18,7 +18,7 @@ const envSchema = z.object({
   SMTP_PORT: z.coerce.number().default(587),
   SMTP_USER: z.string().email(),
   SMTP_PASS: z.string().min(1),
-  DOCKER_HOST: z.string().default('unix:///var/run/docker.sock'),
+  DOCKER_HOST: z.string().optional(),
   MAX_EXECUTION_TIME_MS: z.coerce.number().default(5000),
   MAX_MEMORY_MB: z.coerce.number().default(256),
   PORT: z.coerce.number().default(8000),

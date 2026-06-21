@@ -85,22 +85,27 @@ export class SubmissionsService {
   }
 
   static async runCode(userId: string, data: z.infer<typeof RunCodeSchema>) {
-    const problem = await prisma.problem.findUnique({
-      where: { id: data.problemId },
-      select: { testCases: true }
-    });
-
-    if (!problem) {
-      throw { statusCode: 404, message: 'Problem not found' };
-    }
-
     let testCasesToRun: any[] = [];
 
-    if (data.customInput) {
-      testCasesToRun = [{ input: data.customInput, expectedOutput: '' }]; 
+    if (data.problemId) {
+      const problem = await prisma.problem.findUnique({
+        where: { id: data.problemId },
+        select: { testCases: true }
+      });
+
+      if (!problem) {
+        throw { statusCode: 404, message: 'Problem not found' };
+      }
+
+      if (data.customInput) {
+        testCasesToRun = [{ input: data.customInput, expectedOutput: '' }]; 
+      } else {
+        const allTestCases = problem.testCases as any[];
+        testCasesToRun = allTestCases.slice(0, 3); 
+      }
     } else {
-      const allTestCases = problem.testCases as any[];
-      testCasesToRun = allTestCases.slice(0, 3); 
+      // Freeform execution (e.g. Learn page or scratchpad)
+      testCasesToRun = [{ input: data.customInput || '', expectedOutput: '' }];
     }
 
     const judgeResult = await JudgeService.runCode({

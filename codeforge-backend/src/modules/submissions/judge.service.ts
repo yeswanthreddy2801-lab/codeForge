@@ -4,7 +4,11 @@ import path from 'path';
 import Docker from 'dockerode';
 import { env } from '../../config/env';
 
-const docker = new Docker({ socketPath: env.DOCKER_HOST });
+const dockerOptions: Docker.DockerOptions = {};
+if (env.DOCKER_HOST) {
+  dockerOptions.socketPath = env.DOCKER_HOST;
+}
+const docker = new Docker(dockerOptions);
 
 export interface JudgeResult {
   verdict: 'ACCEPTED' | 'WRONG_ANSWER' | 'TIME_LIMIT_EXCEEDED' | 'MEMORY_LIMIT_EXCEEDED' | 'COMPILATION_ERROR' | 'RUNTIME_ERROR';
@@ -38,6 +42,7 @@ export class JudgeService {
     if (submission.language === 'cpp') {
       fileName = 'solution.cpp';
       imageName = 'codeforge-judge-cpp';
+      submission.code = `#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n#include <map>\n#include <set>\nusing namespace std;\n\n` + submission.code;
     } else if (submission.language === 'java') {
       fileName = 'Solution.java';
       imageName = 'codeforge-judge-java';
@@ -150,18 +155,28 @@ export class JudgeService {
       let maxRuntime = 10;
       let maxMemory = 1024;
       
+      // Mini interpreter for MyLang print statements
+      let stdout = '';
+      const printRegex = /print\s*\(\s*(['"])(.*?)\1\s*\)/g;
+      let match;
+      while ((match = printRegex.exec(submission.code)) !== null) {
+        stdout += match[2] + '\n';
+      }
+      
       for (let i = 0; i < submission.testCases.length; i++) {
         const tc = submission.testCases[i];
         
-        const actual = tc.expectedOutput; 
+        const expected = tc.expectedOutput?.trim() || '';
+        const actual = stdout.trim();
         
-        if (actual.trim() !== tc.expectedOutput.trim()) {
-           return { verdict: 'WRONG_ANSWER', runtime: 5, memory: 512, failedTestCase: i + 1 };
+        // Only validate if we actually have an expected output (not scratchpad)
+        if (expected !== '' && actual !== expected) {
+           return { verdict: 'WRONG_ANSWER', runtime: 5, memory: 512, failedTestCase: i + 1, stdout };
         }
       }
-      return { verdict: 'ACCEPTED', runtime: maxRuntime, memory: maxMemory };
-    } catch (e) {
-      return { verdict: 'RUNTIME_ERROR', runtime: 0, memory: 0 };
+      return { verdict: 'ACCEPTED', runtime: maxRuntime, memory: maxMemory, stdout: stdout.trim() };
+    } catch (e: any) {
+      return { verdict: 'RUNTIME_ERROR', runtime: 0, memory: 0, stderr: e?.message };
     }
   }
 }
