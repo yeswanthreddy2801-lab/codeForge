@@ -6,16 +6,9 @@ import { success } from '../../shared/utils/response.util';
 export class SubmissionsController {
   static async submitCode(req: Request, res: Response, next: NextFunction) {
     try {
-      let userId = req.user?.id;
+      const userId = req.user?.id;
       if (!userId) {
-        const { prisma } = require('../../config/database');
-        let dummyUser = await prisma.user.findFirst();
-        if (!dummyUser) {
-          dummyUser = await prisma.user.create({
-            data: { username: 'guest', email: 'guest@example.com', passwordHash: '123' }
-          });
-        }
-        userId = dummyUser.id;
+        throw { statusCode: 401, message: 'You must be logged in to submit code.' };
       }
 
       const data = SubmitCodeSchema.parse(req.body);

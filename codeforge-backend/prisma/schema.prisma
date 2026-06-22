@@ -9,26 +9,20 @@ datasource db {
 }
 
 model User {
-  id              String   @id @default(uuid())
+  id              String   @id // Maps to auth.users.id from Supabase
   username        String   @unique
   email           String   @unique
-  passwordHash    String
   fullName        String?
   bio             String?
   location        String?
   avatarUrl       String?
   role            Role     @default(USER)
-  isVerified      Boolean  @default(false)
-  verifyToken     String?
-  resetToken      String?
-  resetTokenExpiry DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   submissions     Submission[]
   contestEntries  ContestEntry[]
   lessonProgress  LessonProgress[]
   etcHistory      EtcHistory[]
-  refreshTokens   RefreshToken[]
 }
 
 enum Role {
@@ -154,11 +148,4 @@ model EtcHistory {
   user        User     @relation(fields: [userId], references: [id])
 }
 
-model RefreshToken {
-  id        String   @id @default(uuid())
-  userId    String
-  token     String   @unique
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
-}
+

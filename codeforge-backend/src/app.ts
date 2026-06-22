@@ -36,7 +36,7 @@ app.get('/health', (req: Request, res: Response) => {
 });
 
 // Module routes will be mounted here under /api/v1/
-import authRoutes from './modules/auth/auth.routes';
+// import authRoutes from './modules/auth/auth.routes';
 import usersRoutes from './modules/users/users.routes';
 import problemsRoutes from './modules/problems/problems.routes';
 import submissionsRoutes from './modules/submissions/submissions.routes';
@@ -45,7 +45,7 @@ import contestsRoutes from './modules/contests/contests.routes';
 import learnRoutes from './modules/learn/learn.routes';
 import aiRoutes from './modules/ai/ai.routes';
 
-app.use('/api/v1/auth', authRoutes);
+// app.use('/api/v1/auth', authRoutes); // Auth is now handled directly by Supabase
 app.use('/api/v1/users', usersRoutes);
 app.use('/api/v1/problems', problemsRoutes);
 app.use('/api/v1/submissions', submissionsRoutes);
