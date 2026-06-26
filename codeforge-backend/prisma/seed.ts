@@ -1,13 +1,11 @@
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import process from 'process';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('Seeding database...');
 
-  const passwordHash = await bcrypt.hash('password123', 10);
-  
   const admin = await prisma.user.upsert({
     where: { email: 'admin@codeforge.com' },
     update: {},
@@ -15,7 +13,6 @@ async function main() {
       email: 'admin@codeforge.com',
       username: 'admin',
       fullName: 'System Admin',
-      passwordHash: passwordHash,
       role: 'ADMIN',
       isVerified: true,
     },
@@ -28,7 +25,6 @@ async function main() {
       email: 'user1@example.com',
       username: 'coder_one',
       fullName: 'Alice Smith',
-      passwordHash: passwordHash,
       role: 'USER',
       isVerified: true,
     },
@@ -41,7 +37,6 @@ async function main() {
       email: 'user2@example.com',
       username: 'coder_two',
       fullName: 'Bob Jones',
-      passwordHash: passwordHash,
       role: 'USER',
       isVerified: true,
     },
@@ -49,11 +44,11 @@ async function main() {
 
   const difficulties = ['EASY', 'MEDIUM', 'HARD'] as const;
   const categories = ['Arrays', 'Strings', 'Dynamic Programming', 'Graphs', 'Math'];
-  
+
   for (let i = 1; i <= 30; i++) {
     const diffIndex = Math.floor((i - 1) / 10);
     const diff = difficulties[diffIndex];
-    
+
     await prisma.problem.upsert({
       where: { slug: `problem-${i}` },
       update: {},
@@ -107,7 +102,7 @@ async function main() {
   }
 
   const now = new Date();
-  
+
   const past1Start = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000);
   const past1End = new Date(past1Start.getTime() + 2 * 60 * 60 * 1000);
 
@@ -133,10 +128,10 @@ async function main() {
 
   for (let i = 0; i < 5; i++) {
     const c = contestSchedules[i];
-    
+
     // Check if contest already exists by title
     const existing = await prisma.contest.findFirst({ where: { title: c.title } });
-    
+
     if (!existing) {
       await prisma.contest.create({
         data: {
