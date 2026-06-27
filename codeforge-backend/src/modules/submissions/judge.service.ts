@@ -132,8 +132,10 @@ export class JudgeService {
         }
 
         const expected = tc.expectedOutput.trim();
-        const actual = stdout.trim();
+        console.log(expected);
 
+        const actual = stdout.trim();
+        console.log(actual);
         if (expected !== actual) {
           return { verdict: 'WRONG_ANSWER', runtime, memory: maxMemory, failedTestCase: i + 1, stdout: actual.substring(0, 1000) };
         }
